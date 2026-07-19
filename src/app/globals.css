@@ -5,10 +5,13 @@
   --foreground: #171717;
 }
 
-@theme inline {
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-jnu-green: #007a33;
+  --color-jnu-blue: #003594;
+  --color-jnu-yellow: #f1b434;
+  --font-sans: var(--font-jnu), Arial, Helvetica, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 

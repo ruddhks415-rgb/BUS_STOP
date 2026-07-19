@@ -42,8 +42,8 @@ function ReportForm() {
       </header>
 
       <main className="p-4 flex-1 w-full max-w-md mx-auto mt-4">
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-6 shadow-sm">
-          <p className="text-sm text-blue-600 font-semibold mb-1">제보 대상 정류장</p>
+        <div className="bg-jnu-green/10 border border-jnu-green/20 rounded-xl p-5 mb-6 shadow-sm">
+          <p className="text-sm text-jnu-green font-semibold mb-1">제보 대상 정류장</p>
           <p className="text-2xl font-bold text-gray-900">
             {stop ? stop.name : "알 수 없는 정류장"} <span className="text-base text-gray-500 font-normal">({stopId || "ID 없음"})</span>
           </p>
@@ -65,7 +65,7 @@ function ReportForm() {
                       }
                     }}
                     className={`w-full text-left px-5 py-4 font-bold text-gray-800 transition-colors flex justify-between items-center ${
-                      selectedCategory === category.id ? "bg-blue-50 text-blue-700" : "hover:bg-gray-50"
+                      selectedCategory === category.id ? "bg-jnu-green/10 text-jnu-green/80" : "hover:bg-gray-50"
                     }`}
                   >
                     <span>{category.label}</span>
@@ -75,26 +75,26 @@ function ReportForm() {
                   {selectedCategory === category.id && (
                     <div className="p-4 bg-gray-50 border-t border-gray-200 flex flex-col gap-2">
                       {category.subItems.map((subItem) => (
-                         <label key={subItem} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${selectedSubItem === subItem ? "border-blue-500 bg-blue-50/50" : "border-gray-200 bg-white hover:border-blue-300"}`}>
+                         <label key={subItem} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${selectedSubItem === subItem ? "border-jnu-green bg-jnu-green/10" : "border-gray-200 bg-white hover:border-jnu-green/50"}`}>
                            <input
                              type="radio"
                              name="subItem"
                              value={subItem}
                              checked={selectedSubItem === subItem}
                              onChange={(e) => setSelectedSubItem(e.target.value)}
-                             className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                             className="w-4 h-4 text-jnu-green border-gray-300 focus:ring-jnu-green"
                            />
                            <span className="text-sm font-medium text-gray-700">{subItem}</span>
                          </label>
                       ))}
-                      <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${selectedSubItem === "직접 입력" ? "border-blue-500 bg-blue-50/50" : "border-gray-200 bg-white hover:border-blue-300"}`}>
+                      <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${selectedSubItem === "직접 입력" ? "border-jnu-green bg-jnu-green/10" : "border-gray-200 bg-white hover:border-jnu-green/50"}`}>
                          <input
                            type="radio"
                            name="subItem"
                            value="직접 입력"
                            checked={selectedSubItem === "직접 입력"}
                            onChange={(e) => setSelectedSubItem(e.target.value)}
-                           className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                           className="w-4 h-4 text-jnu-green border-gray-300 focus:ring-jnu-green"
                          />
                          <span className="text-sm font-medium text-gray-700">직접 입력</span>
                       </label>
@@ -104,7 +104,7 @@ function ReportForm() {
                           value={customIssue}
                           onChange={(e) => setCustomIssue(e.target.value)}
                           placeholder="불편사항을 직접 입력해 주세요"
-                          className="mt-2 w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          className="mt-2 w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-jnu-green focus:border-jnu-green outline-none"
                         />
                       )}
                     </div>
@@ -130,7 +130,7 @@ function ReportForm() {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full border-2 border-gray-200 rounded-xl p-4 h-32 resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition text-gray-800"
+              className="w-full border-2 border-gray-200 rounded-xl p-4 h-32 resize-none focus:ring-2 focus:ring-jnu-green focus:border-jnu-green focus:outline-none transition text-gray-800"
               placeholder="예: 정류장 지붕 한쪽이 깨져서 비가 샙니다."
             />
           </div>
@@ -138,7 +138,7 @@ function ReportForm() {
           {/* 제출 버튼 */}
           <button
             type="submit"
-            className="mt-2 bg-blue-600 text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 transition shadow-lg w-full"
+            className="mt-2 bg-jnu-green text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-jnu-green/80 transition shadow-lg w-full"
           >
             <Upload size={22} />
             제보 제출하기

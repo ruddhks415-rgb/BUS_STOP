@@ -21,7 +21,7 @@ function CampusReportForm() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4 text-center">
         <p className="text-gray-500 mb-4">잘못된 접근입니다. 건물을 먼저 선택해주세요.</p>
-        <button onClick={() => router.push("/campus")} className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
+        <button onClick={() => router.push("/campus")} className="px-4 py-2 bg-jnu-blue text-white rounded-lg font-medium hover:bg-jnu-blue/80">
           캠퍼스 지도로 돌아가기
         </button>
       </div>
@@ -72,8 +72,8 @@ function CampusReportForm() {
       </header>
 
       <main className="p-4 flex-1 w-full max-w-md mx-auto mt-4">
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-6 shadow-sm">
-          <p className="text-sm text-blue-600 font-semibold mb-1">제보 대상 건물</p>
+        <div className="bg-jnu-blue/10 border border-jnu-blue/20 rounded-xl p-5 mb-6 shadow-sm">
+          <p className="text-sm text-jnu-blue font-semibold mb-1">제보 대상 건물</p>
           <p className="text-2xl font-bold text-gray-900">
             {building.name} <span className="text-base text-gray-500 font-normal">({buildingId})</span>
           </p>
@@ -94,7 +94,7 @@ function CampusReportForm() {
                       }
                     }}
                     className={`w-full text-left px-5 py-4 font-bold text-gray-800 transition-colors flex justify-between items-center ${
-                      mainCategory === category.id ? "bg-blue-50 text-blue-700" : "hover:bg-gray-50"
+                      mainCategory === category.id ? "bg-jnu-blue/10 text-jnu-blue/80" : "hover:bg-gray-50"
                     }`}
                   >
                     <span>{category.title}</span>
@@ -104,26 +104,26 @@ function CampusReportForm() {
                   {mainCategory === category.id && (
                     <div className="p-4 bg-gray-50 border-t border-gray-200 flex flex-col gap-2">
                       {category.subcategories.map((sub) => (
-                         <label key={sub} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${subCategory === sub ? "border-blue-500 bg-blue-50/50" : "border-gray-200 bg-white hover:border-blue-300"}`}>
+                         <label key={sub} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${subCategory === sub ? "border-jnu-blue bg-jnu-blue/10" : "border-gray-200 bg-white hover:border-jnu-blue/50"}`}>
                            <input
                              type="radio"
                              name="subCategory"
                              value={sub}
                              checked={subCategory === sub}
                              onChange={(e) => setSubCategory(e.target.value)}
-                             className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                             className="w-4 h-4 text-jnu-blue border-gray-300 focus:ring-jnu-blue"
                            />
                            <span className="text-sm font-medium text-gray-700">{sub}</span>
                          </label>
                       ))}
-                      <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${subCategory === "기타 (직접 입력)" ? "border-blue-500 bg-blue-50/50" : "border-gray-200 bg-white hover:border-blue-300"}`}>
+                      <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${subCategory === "기타 (직접 입력)" ? "border-jnu-blue bg-jnu-blue/10" : "border-gray-200 bg-white hover:border-jnu-blue/50"}`}>
                          <input
                            type="radio"
                            name="subCategory"
                            value="기타 (직접 입력)"
                            checked={subCategory === "기타 (직접 입력)"}
                            onChange={(e) => setSubCategory(e.target.value)}
-                           className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                           className="w-4 h-4 text-jnu-blue border-gray-300 focus:ring-jnu-blue"
                          />
                          <span className="text-sm font-medium text-gray-700">기타 (직접 입력)</span>
                       </label>
@@ -133,7 +133,7 @@ function CampusReportForm() {
                           value={customIssue}
                           onChange={(e) => setCustomIssue(e.target.value)}
                           placeholder="불편사항을 직접 입력해 주세요"
-                          className="mt-2 w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          className="mt-2 w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-jnu-blue focus:border-jnu-blue outline-none"
                         />
                       )}
                     </div>
@@ -154,10 +154,10 @@ function CampusReportForm() {
                 <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
               </label>
             ) : (
-              <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-100 rounded-xl">
+              <div className="flex items-center justify-between p-4 bg-jnu-blue/10 border border-blue-100 rounded-xl">
                 <div className="flex items-center gap-3 overflow-hidden">
                   <div className="p-2 bg-blue-100 rounded-lg shrink-0">
-                    <ImageIcon className="w-6 h-6 text-blue-600" />
+                    <ImageIcon className="w-6 h-6 text-jnu-blue" />
                   </div>
                   <span className="text-sm font-medium text-gray-700 truncate">{photo.name}</span>
                 </div>
@@ -173,14 +173,14 @@ function CampusReportForm() {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full border-2 border-gray-200 rounded-xl p-4 h-32 resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition text-gray-800 bg-white"
+              className="w-full border-2 border-gray-200 rounded-xl p-4 h-32 resize-none focus:ring-2 focus:ring-jnu-blue focus:border-jnu-blue focus:outline-none transition text-gray-800 bg-white"
               placeholder="발생한 문제의 구체적인 위치(예: 3층 남자화장실 등)와 상황을 적어주세요."
             />
           </div>
 
           <button
             type="submit"
-            className="mt-2 bg-blue-600 text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 transition shadow-lg w-full"
+            className="mt-2 bg-jnu-blue text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-jnu-blue/80 transition shadow-lg w-full"
           >
             <Upload size={22} />
             제보 제출하기
