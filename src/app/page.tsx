@@ -24,10 +24,10 @@ export default function Home() {
           </h1>
         </button>
         
-        <div className={`transition-all duration-500 ease-in-out overflow-hidden \${showDesc ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
+        <div className={`transition-all duration-500 ease-in-out overflow-hidden ${showDesc ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
           <p className="text-gray-500 text-sm leading-relaxed mt-2">
             '앞으로 좋게 발전할 품질이나 품성'을 뜻하는 순우리말.<br />
-            전남대가 가진 잠재력을 이끌어내어 더 나은 방향으로 성장시키겠습니다.
+            더 나은 전남대, 그 변화의 시작이 될 우리의 가능성
           </p>
         </div>
       </div>
