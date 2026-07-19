@@ -78,7 +78,7 @@ export default function CampusMap() {
       />
       <div
         id="campus-map"
-        className="w-full h-full min-h-[500px] bg-gray-200 relative z-0"
+        className="w-full h-full bg-gray-200 relative z-0"
       >
         {!mapLoaded && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">

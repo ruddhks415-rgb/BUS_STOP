@@ -701,6 +701,33 @@ export const BUILDINGS = [
     "lng": 126.907684019063,
     "isEstimated": false,
     "cumulativeReports": 3
+  },
+  {
+    "id": "new_1",
+    "code": "제2학생회관",
+    "name": "제2학생회관",
+    "lat": 35.1748125,
+    "lng": 126.9028125,
+    "isEstimated": false,
+    "cumulativeReports": 0
+  },
+  {
+    "id": "new_2",
+    "code": "사회과학대학",
+    "name": "사회과학대학",
+    "lat": 35.1750625,
+    "lng": 126.9041875,
+    "isEstimated": false,
+    "cumulativeReports": 0
+  },
+  {
+    "id": "new_3",
+    "code": "도서관 별관",
+    "name": "도서관 별관",
+    "lat": 35.1780625,
+    "lng": 126.9069375,
+    "isEstimated": false,
+    "cumulativeReports": 0
   }
 ];
 
