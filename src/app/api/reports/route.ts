@@ -98,7 +98,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(newReport);
   } catch (error) {
-    require('fs').writeFileSync('debug_error.log', String(error) + '\\n' + (error.stack || ''));
     console.error("POST /api/reports error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
