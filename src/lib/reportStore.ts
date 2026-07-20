@@ -25,7 +25,10 @@ export const addReport = async (
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(reportData),
   });
-  if (!res.ok) throw new Error("Failed to add report");
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`서버 오류 (${res.status}): ${errorText}`);
+  }
   return res.json();
 };
 

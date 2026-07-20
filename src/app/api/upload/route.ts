@@ -20,6 +20,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(blob);
   } catch (error) {
+    require('fs').writeFileSync('debug_error_upload.log', String(error) + '\\n' + (error.stack || ''));
     console.error("Blob upload error:", error);
     return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
   }

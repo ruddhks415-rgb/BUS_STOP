@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     query += ` ORDER BY created_at DESC`;
 
     // @ts-ignore
-    const reports = await sql(query, params);
+    const reports = await sql.query(query, params);
 
     // Convert keys to camelCase for the frontend
     const mapped = reports.map(r => ({
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     const statusHistory = JSON.stringify([{ status: "접수됨", at: now }]);
 
     // @ts-ignore
-    await sql(`
+    await sql.query(`
       INSERT INTO reports (
         id, report_code, type, stop_id, stop_name, issue_type, description, photo_url,
         status, status_history, empathy_count, is_urgent, lat, lng
@@ -98,6 +98,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(newReport);
   } catch (error) {
+    require('fs').writeFileSync('debug_error.log', String(error) + '\\n' + (error.stack || ''));
     console.error("POST /api/reports error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

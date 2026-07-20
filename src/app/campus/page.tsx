@@ -18,10 +18,6 @@ export default function CampusPage() {
           <Building2 size={24} />
           <h1 className="text-lg sm:text-xl font-bold tracking-wide">전남대 캠퍼스 제보</h1>
         </div>
-        <a href="/admin" className="flex items-center gap-1 text-sm bg-black/20 px-3 py-1.5 rounded-full hover:bg-black/30 transition">
-          <ShieldAlert size={16} />
-          <span>관리자</span>
-        </a>
       </header>
       
       {/* Map Area */}

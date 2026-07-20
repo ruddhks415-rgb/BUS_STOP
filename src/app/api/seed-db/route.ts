@@ -10,7 +10,7 @@ export async function GET() {
 
     // Execute the raw SQL migration
     // @ts-ignore
-    await sql(migrationSql);
+    await sql.query(migrationSql);
 
     return NextResponse.json({ message: "Database tables created successfully!" });
   } catch (error) {

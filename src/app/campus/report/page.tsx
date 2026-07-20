@@ -73,7 +73,8 @@ function CampusReportForm() {
           const blob = await res.json();
           photoUrl = blob.url;
         } else {
-          alert("이미지 업로드에 실패했습니다. 이미지가 제외된 채로 제보됩니다.");
+          const errText = await res.text();
+          alert("이미지 업로드에 실패했습니다. 에러: " + errText);
         }
       }
 
@@ -90,8 +91,8 @@ function CampusReportForm() {
       sessionStorage.setItem("lastReportCode", newReport.reportCode);
       saveMyReportCode(newReport.reportCode);
       router.push("/campus/report/complete");
-    } catch (err) {
-      alert("제보 등록 중 오류가 발생했습니다.");
+    } catch (err: any) {
+      alert("제보 등록 중 오류가 발생했습니다: " + err.message);
     } finally {
       setIsSubmitting(false);
     }
