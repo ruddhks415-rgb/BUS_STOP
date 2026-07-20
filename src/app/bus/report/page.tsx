@@ -2,8 +2,9 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { ISSUE_CATEGORIES, STOPS } from "@/lib/mockData";
+import { addReport, checkDuplicateReport, addEmpathy, Report, saveMyReportCode } from "@/lib/reportStore";
 import { useState, Suspense } from "react";
-import { ArrowLeft, Camera, Upload, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Camera, Upload, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 
 function ReportForm() {
   const searchParams = useSearchParams();
@@ -16,7 +17,9 @@ function ReportForm() {
   const [customIssue, setCustomIssue] = useState("");
   const [description, setDescription] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [duplicateReport, setDuplicateReport] = useState<Report | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCategory || !selectedSubItem) {
       alert("불편 유형을 선택해 주세요.");
@@ -27,8 +30,44 @@ function ReportForm() {
       alert("불편 유형을 직접 입력해 주세요.");
       return;
     }
-    // Mock save
-    sessionStorage.setItem("lastReport", JSON.stringify({ stopId, issueType, description }));
+    
+    if (!stop) return;
+
+    // Check duplicate
+    const duplicate = await checkDuplicateReport(stopId, issueType);
+    if (duplicate) {
+      setDuplicateReport(duplicate);
+      return;
+    }
+
+    await submitNewReport(issueType);
+  };
+
+  const submitNewReport = async (issueType: string) => {
+    if (!stop) return;
+    try {
+      const newReport = await addReport({
+        stopId,
+        stopName: stop.name,
+        issueType,
+        description,
+        type: "bus",
+        lat: stop.lat,
+        lng: stop.lng
+      });
+      sessionStorage.setItem("lastReportCode", newReport.reportCode);
+      saveMyReportCode(newReport.reportCode);
+      router.push("/bus/report/complete");
+    } catch (err) {
+      alert("제보 등록 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleEmpathyDuplicate = async () => {
+    if (!duplicateReport) return;
+    await addEmpathy(duplicateReport.id);
+    sessionStorage.setItem("lastReportCode", duplicateReport.reportCode);
+    saveMyReportCode(duplicateReport.reportCode);
     router.push("/bus/report/complete");
   };
 
@@ -145,6 +184,32 @@ function ReportForm() {
           </button>
         </form>
       </main>
+
+      {/* Duplicate Modal */}
+      {duplicateReport && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <div className="flex items-center gap-3 mb-4 text-orange-600">
+              <AlertCircle size={24} />
+              <h3 className="text-lg font-bold text-gray-900">비슷한 민원이 이미 있습니다!</h3>
+            </div>
+            <p className="text-gray-600 text-sm mb-4">
+              이미 진행 중인 동일한 유형({duplicateReport.issueType})의 민원이 존재합니다.<br/>새로 작성하는 대신 기존 민원에 공감하시겠습니까?
+            </p>
+            <div className="bg-orange-50 border border-orange-100 rounded-lg p-3 mb-6 text-sm text-gray-700">
+              <span className="font-bold text-orange-700">현재 상태:</span> {duplicateReport.status}
+            </div>
+            <div className="flex flex-col gap-2">
+              <button onClick={handleEmpathyDuplicate} className="w-full py-3 rounded-xl text-white bg-jnu-green hover:bg-jnu-green/80 font-bold transition shadow-md">
+                네, 기존 민원에 공감할게요 ❤️
+              </button>
+              <button onClick={() => { setDuplicateReport(null); submitNewReport(selectedSubItem === "직접 입력" ? customIssue : selectedSubItem); }} className="w-full py-3 rounded-xl text-gray-500 bg-gray-100 hover:bg-gray-200 font-bold transition">
+                아니오, 따로 제보할게요
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

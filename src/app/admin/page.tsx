@@ -1,117 +1,85 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { REPORTS, STOPS } from "@/lib/mockData";
-import { BUILDINGS, CAMPUS_REPORTS } from "@/lib/campusMockData";
+import { getReports, updateReportStatus, Report } from "@/lib/reportStore";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Lock, LogOut, FileText, ArrowLeft, BusFront, Building2 } from "lucide-react";
+import { LogOut, FileText, ArrowLeft, Flame, Filter, ArrowUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
+const STATUS_OPTIONS: Report["status"][] = ["접수됨", "검토중", "제출됨", "해결됨", "반려"];
 
 export default function AdminPage() {
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [password, setPassword] = useState("");
-  const [isClient, setIsClient] = useState(false);
-  const [activeTab, setActiveTab] = useState<"bus" | "campus">("bus");
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Filters and Sorting
+  const [typeFilter, setTypeFilter] = useState<"all" | "bus" | "campus">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | Report["status"]>("all");
+  const [sortBy, setSortBy] = useState<"latest" | "empathy">("latest");
+  
+  // Status Modal
+  const [statusModal, setStatusModal] = useState<{ id: string; status: Report["status"]; memo: string } | null>(null);
 
   useEffect(() => {
-    setIsClient(true);
-    if (sessionStorage.getItem("adminAuth") === "true") {
-      setIsLoggedIn(true);
-    }
+    loadReports();
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const loadReports = async () => {
+    const data = await getReports();
+    setReports(data);
+    setLoading(false);
+  };
+
+  const handleLogout = async () => {
+    document.cookie = "admin_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    router.push("/admin/login");
+  };
+
+  const confirmStatusChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === "1234") {
-      sessionStorage.setItem("adminAuth", "true");
-      setIsLoggedIn(true);
-    } else {
-      alert("비밀번호가 틀렸습니다. (힌트: 1234)");
-    }
+    if (!statusModal) return;
+    
+    await updateReportStatus(statusModal.id, statusModal.status, statusModal.memo);
+    setStatusModal(null);
+    loadReports(); // Reload data
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem("adminAuth");
-    setIsLoggedIn(false);
-  };
+  if (loading) return <div className="p-8 text-center">데이터를 불러오는 중입니다...</div>;
 
-  if (!isClient) return null;
+  const filteredReports = reports.filter(r => {
+    if (typeFilter !== "all" && r.type !== typeFilter) return false;
+    if (statusFilter !== "all" && r.status !== statusFilter) return false;
+    return true;
+  }).sort((a, b) => {
+    if (sortBy === "empathy") return b.empathyCount - a.empathyCount;
+    // latest
+    return new Date(b.statusHistory[b.statusHistory.length - 1].at).getTime() - new Date(a.statusHistory[a.statusHistory.length - 1].at).getTime();
+  });
 
-  if (!isLoggedIn) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-lg max-w-sm w-full border border-gray-100">
-          <div className="flex justify-center mb-6">
-            <div className="bg-blue-100 p-4 rounded-full text-blue-600">
-              <Lock size={32} />
-            </div>
-          </div>
-          <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">관리자 로그인</h1>
-          <form onSubmit={handleLogin} className="flex flex-col gap-4">
-            <div>
-              <input
-                type="password"
-                placeholder="비밀번호 입력 (1234)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition"
-              />
-            </div>
-            <button type="submit" className="bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition shadow-md">
-              로그인
-            </button>
-          </form>
-          <button onClick={() => router.push("/")} className="mt-4 w-full text-center text-gray-500 text-sm hover:underline">
-            홈으로 돌아가기
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // 데이터 집계
-  const reportsByLocation = activeTab === "bus"
-    ? STOPS.map((stop) => ({
-        name: stop.name,
-        count: REPORTS.filter((r) => r.stopId === stop.id).length,
-      })).filter(s => s.count > 0)
-    : BUILDINGS.map((building) => ({
-        name: building.name,
-        count: CAMPUS_REPORTS.filter((r) => r.buildingId === building.id).length,
-      })).filter(s => s.count > 0);
-
-  const reportsByTypeMap: Record<string, number> = {};
-  if (activeTab === "bus") {
-    REPORTS.forEach(r => {
-      reportsByTypeMap[r.issueType] = (reportsByTypeMap[r.issueType] || 0) + 1;
-    });
-  } else {
-    CAMPUS_REPORTS.forEach(r => {
-      reportsByTypeMap[r.mainCategory] = (reportsByTypeMap[r.mainCategory] || 0) + 1;
-    });
-  }
+  const locationCounts: Record<string, number> = {};
+  const typeCounts: Record<string, number> = {};
   
-  const reportsByType = Object.entries(reportsByTypeMap).map(([name, value]) => ({
-    name, value
-  }));
+  filteredReports.forEach(r => {
+    locationCounts[r.stopName] = (locationCounts[r.stopName] || 0) + 1;
+    typeCounts[r.issueType] = (typeCounts[r.issueType] || 0) + 1;
+  });
 
-  const displayReports = activeTab === "bus" ? REPORTS : CAMPUS_REPORTS;
+  const reportsByLocation = Object.entries(locationCounts).map(([name, count]) => ({ name, count })).sort((a,b)=>b.count-a.count).slice(0, 10);
+  const reportsByType = Object.entries(typeCounts).map(([name, value]) => ({ name, value }));
 
   return (
     <div className="min-h-screen bg-gray-50 pb-10">
-      {/* Header */}
       <header className="bg-white p-4 shadow-sm flex justify-between items-center sticky top-0 z-10">
         <div className="flex items-center gap-3">
           <button onClick={() => router.push("/")} className="text-gray-600 p-1 hover:bg-gray-100 rounded-full transition">
             <ArrowLeft size={24} />
           </button>
-          <h1 className="text-xl font-bold text-gray-800">관리자 대시보드</h1>
+          <h1 className="text-xl font-bold text-gray-800">통합 관리자 대시보드</h1>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => router.push("/admin/report")} className="flex items-center gap-1 text-sm bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1.5 rounded-full hover:bg-blue-100 transition font-semibold shadow-sm">
+          <button onClick={() => router.push("/admin/export")} className="flex items-center gap-1 text-sm bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1.5 rounded-full hover:bg-blue-100 transition font-semibold shadow-sm">
             <FileText size={16} />
             <span>리포트 생성</span>
           </button>
@@ -124,44 +92,44 @@ export default function AdminPage() {
 
       <main className="p-4 sm:p-6 max-w-6xl mx-auto flex flex-col gap-6">
         
-        {/* Tabs */}
-        <div className="flex gap-4 border-b border-gray-200 pb-2">
-          <button
-            onClick={() => setActiveTab("bus")}
-            className={`flex items-center gap-2 px-4 py-2 font-bold text-lg transition border-b-4 \${
-              activeTab === "bus" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-400 hover:text-gray-600"
-            }`}
-          >
-            <BusFront size={20} /> 버스 정류장 민원
-          </button>
-          <button
-            onClick={() => setActiveTab("campus")}
-            className={`flex items-center gap-2 px-4 py-2 font-bold text-lg transition border-b-4 \${
-              activeTab === "campus" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-400 hover:text-gray-600"
-            }`}
-          >
-            <Building2 size={20} /> 캠퍼스 건물 민원
-          </button>
+        {/* Filters */}
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-center">
+          <div className="flex items-center gap-2">
+            <Filter size={18} className="text-gray-500" />
+            <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as any)} className="border-gray-300 rounded-lg text-sm p-2 bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="all">전체 민원</option>
+              <option value="bus">버스 정류장 민원</option>
+              <option value="campus">캠퍼스 건물 민원</option>
+            </select>
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)} className="border-gray-300 rounded-lg text-sm p-2 bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="all">모든 상태</option>
+              {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div className="flex items-center gap-2 ml-auto">
+            <ArrowUpDown size={18} className="text-gray-500" />
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="border-gray-300 rounded-lg text-sm p-2 bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="latest">최신 업데이트순</option>
+              <option value="empathy">공감 많은순</option>
+            </select>
+          </div>
         </div>
 
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Bar Chart */}
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">{activeTab === "bus" ? "정류장별" : "건물별"} 제보 건수</h2>
+            <h2 className="text-lg font-bold text-gray-800 mb-4">장소별 민원 건수 (Top 10)</h2>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={reportsByLocation}>
                   <XAxis dataKey="name" fontSize={12} tickMargin={10} />
                   <YAxis fontSize={12} allowDecimals={false} />
                   <Tooltip cursor={{ fill: '#f1f5f9' }} />
-                  <Bar dataKey="count" fill={activeTab === "bus" ? "#2563eb" : "#4f46e5"} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" fill="#4f46e5" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
-
-          {/* Pie Chart */}
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
             <h2 className="text-lg font-bold text-gray-800 mb-4">불편 유형별 비율</h2>
             <div className="h-64">
@@ -169,63 +137,104 @@ export default function AdminPage() {
                 <PieChart>
                   <Pie data={reportsByType} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
                     {reportsByType.map((entry, index) => (
-                      <Cell key={`cell-\${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip />
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="flex flex-wrap justify-center gap-3 mt-2">
-              {reportsByType.map((entry, index) => (
-                <div key={entry.name} className="flex items-center gap-1 text-sm text-gray-600">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                  {entry.name} ({entry.value}건)
-                </div>
-              ))}
-            </div>
           </div>
         </div>
 
-        {/* Table Row */}
+        {/* Table */}
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">최근 제보 목록</h2>
+          <h2 className="text-lg font-bold text-gray-800 mb-4">신고 목록 ({filteredReports.length}건)</h2>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
+            <table className="w-full text-sm text-left whitespace-nowrap">
               <thead className="bg-gray-50 text-gray-600 font-semibold border-b border-gray-200">
                 <tr>
-                  <th className="px-4 py-3">날짜</th>
-                  <th className="px-4 py-3">{activeTab === "bus" ? "정류장" : "건물명"}</th>
+                  <th className="px-4 py-3">코드</th>
+                  <th className="px-4 py-3">분류</th>
+                  <th className="px-4 py-3">대상</th>
                   <th className="px-4 py-3">유형</th>
                   <th className="px-4 py-3 min-w-[200px]">상세 내용</th>
-                  <th className="px-4 py-3">상태</th>
+                  <th className="px-4 py-3">공감</th>
+                  <th className="px-4 py-3">상태 변경</th>
                 </tr>
               </thead>
               <tbody>
-                {displayReports.map((report: any) => (
+                {filteredReports.map((report) => (
                   <tr key={report.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{report.date}</td>
-                    <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">{activeTab === "bus" ? report.stopName : report.buildingName}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-md text-xs font-semibold">{activeTab === "bus" ? report.issueType : report.mainCategory}</span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600 truncate max-w-xs">{report.description}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={`px-2 py-1 rounded-md text-xs font-bold \${
-                        report.status === "접수완료" ? "bg-red-100 text-red-700" :
-                        report.status === "처리중" ? "bg-yellow-100 text-yellow-700" :
-                        "bg-green-100 text-green-700"
-                      }`}>
-                        {report.status}
+                    <td className="px-4 py-3 font-mono text-gray-500 font-semibold">{report.reportCode}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-md text-xs font-semibold ${report.type === "bus" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
+                        {report.type === "bus" ? "버스" : "캠퍼스"}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 font-bold text-gray-900">{report.stopName}</td>
+                    <td className="px-4 py-3 text-gray-700">{report.issueType}</td>
+                    <td className="px-4 py-3 text-gray-600 truncate max-w-xs">{report.description}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1 font-bold text-gray-700">
+                        {report.empathyCount > 0 && <span>{report.empathyCount}</span>}
+                        {report.empathyCount >= 5 && <Flame size={16} className="text-red-500" />}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <select 
+                        value={report.status} 
+                        onChange={(e) => setStatusModal({ id: report.id, status: e.target.value as Report["status"], memo: "" })}
+                        className={`text-xs font-bold rounded-lg border-2 outline-none cursor-pointer p-1.5 w-full max-w-[100px] ${
+                          report.status === "접수됨" ? "border-red-200 text-red-700 bg-red-50" :
+                          report.status === "검토중" ? "border-orange-200 text-orange-700 bg-orange-50" :
+                          report.status === "제출됨" ? "border-yellow-200 text-yellow-700 bg-yellow-50" :
+                          report.status === "해결됨" ? "border-green-200 text-green-700 bg-green-50" :
+                          "border-gray-200 text-gray-700 bg-gray-50"
+                        }`}
+                      >
+                        {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
                     </td>
                   </tr>
                 ))}
+                {filteredReports.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="text-center py-8 text-gray-500">조건에 맞는 민원이 없습니다.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         </div>
       </main>
+
+      {/* Status Update Modal */}
+      {statusModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <form onSubmit={confirmStatusChange} className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">상태 변경: {statusModal.status}</h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">상태 변경 사유 (메모)</label>
+              <textarea
+                value={statusModal.memo}
+                onChange={(e) => setStatusModal({...statusModal, memo: e.target.value})}
+                placeholder="선택사항입니다."
+                className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button type="button" onClick={() => setStatusModal(null)} className="px-4 py-2 rounded-lg text-gray-600 bg-gray-100 hover:bg-gray-200 font-medium transition">
+                취소
+              </button>
+              <button type="submit" className="px-4 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700 font-medium transition">
+                변경 확인
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

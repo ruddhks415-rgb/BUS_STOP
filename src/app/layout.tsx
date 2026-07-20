@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import StoreInitializer from "@/components/StoreInitializer";
 
 const jnuFont = localFont({
   src: "../../public/fonts/jnu-font.ttf",
@@ -23,7 +24,10 @@ export default function RootLayout({
       lang="ko"
       className={`${jnuFont.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <StoreInitializer />
+        {children}
+      </body>
     </html>
   );
 }

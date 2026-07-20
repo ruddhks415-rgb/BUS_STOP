@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ArrowRight, BusFront, Building2 } from "lucide-react";
+import { ArrowRight, BusFront, Building2, Search } from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
@@ -33,7 +33,7 @@ export default function Home() {
       </div>
 
       {/* 메뉴 카드 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
         {/* 버스 정류장 민원 카드 */}
         <button
           onClick={() => router.push("/bus")}
@@ -70,6 +70,26 @@ export default function Home() {
             </p>
             <div className="flex flex-row items-center justify-center gap-2 text-jnu-blue font-semibold group-hover:gap-3 transition-all whitespace-nowrap">
               <span>바로가기</span> <ArrowRight size={20} className="relative -top-0.5" />
+            </div>
+          </div>
+        </button>
+
+        {/* 내 제보 조회 카드 */}
+        <button
+          onClick={() => router.push("/my-report")}
+          className="group relative bg-white border border-gray-200 rounded-3xl p-8 flex flex-col items-center text-center shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div className="relative z-10">
+            <div className="w-20 h-20 bg-yellow-500/10 text-yellow-500 rounded-2xl flex items-center justify-center mb-6 mx-auto group-hover:scale-110 transition-transform duration-300">
+              <Search size={40} />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-3">내 제보 조회</h2>
+            <p className="text-gray-500 mb-6 font-medium">
+              제보 시 발급받은 코드로<br />처리 현황을 확인해 보세요.
+            </p>
+            <div className="flex flex-row items-center justify-center gap-2 text-yellow-600 font-semibold group-hover:gap-3 transition-all whitespace-nowrap">
+              <span>조회하기</span> <ArrowRight size={20} className="relative -top-0.5" />
             </div>
           </div>
         </button>

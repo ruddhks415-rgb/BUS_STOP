@@ -3,7 +3,8 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, Suspense } from "react";
 import { BUILDINGS, BUILDING_ISSUE_CATEGORIES } from "@/lib/campusMockData";
-import { ArrowLeft, Camera, Upload, ChevronDown, ChevronUp, X, Image as ImageIcon } from "lucide-react";
+import { addReport, checkDuplicateReport, addEmpathy, Report, saveMyReportCode } from "@/lib/reportStore";
+import { ArrowLeft, Camera, Upload, ChevronDown, ChevronUp, X, Image as ImageIcon, AlertCircle } from "lucide-react";
 
 function CampusReportForm() {
   const searchParams = useSearchParams();
@@ -28,7 +29,9 @@ function CampusReportForm() {
     );
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [duplicateReport, setDuplicateReport] = useState<Report | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!mainCategory || !subCategory) {
       alert("불편 유형을 선택해 주세요.");
@@ -40,15 +43,44 @@ function CampusReportForm() {
       return;
     }
     
-    // Mock save
-    sessionStorage.setItem("lastCampusReport", JSON.stringify({ 
-      buildingId, 
-      mainCategory, 
-      subCategory: issueType, 
-      description,
-      hasPhoto: photo !== null,
-      photoName: photo ? photo.name : null
-    }));
+    if (!building) return;
+
+    // Check duplicate
+    const duplicate = await checkDuplicateReport(buildingId, issueType);
+    if (duplicate) {
+      setDuplicateReport(duplicate);
+      return;
+    }
+
+    await submitNewReport(issueType);
+  };
+
+  const submitNewReport = async (issueType: string) => {
+    if (!building) return;
+    try {
+      const newReport = await addReport({
+        stopId: buildingId,
+        stopName: building.name,
+        issueType,
+        description,
+        type: "campus",
+        photoUrl: photo ? photo.name : undefined,
+        lat: building.lat,
+        lng: building.lng
+      });
+      sessionStorage.setItem("lastReportCode", newReport.reportCode);
+      saveMyReportCode(newReport.reportCode);
+      router.push("/campus/report/complete");
+    } catch (err) {
+      alert("제보 등록 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleEmpathyDuplicate = async () => {
+    if (!duplicateReport) return;
+    await addEmpathy(duplicateReport.id);
+    sessionStorage.setItem("lastReportCode", duplicateReport.reportCode);
+    saveMyReportCode(duplicateReport.reportCode);
     router.push("/campus/report/complete");
   };
 
@@ -187,6 +219,32 @@ function CampusReportForm() {
           </button>
         </form>
       </main>
+
+      {/* Duplicate Modal */}
+      {duplicateReport && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <div className="flex items-center gap-3 mb-4 text-orange-600">
+              <AlertCircle size={24} />
+              <h3 className="text-lg font-bold text-gray-900">비슷한 민원이 이미 있습니다!</h3>
+            </div>
+            <p className="text-gray-600 text-sm mb-4">
+              이미 진행 중인 동일한 유형({duplicateReport.issueType})의 민원이 존재합니다.<br/>새로 작성하는 대신 기존 민원에 공감하시겠습니까?
+            </p>
+            <div className="bg-orange-50 border border-orange-100 rounded-lg p-3 mb-6 text-sm text-gray-700">
+              <span className="font-bold text-orange-700">현재 상태:</span> {duplicateReport.status}
+            </div>
+            <div className="flex flex-col gap-2">
+              <button onClick={handleEmpathyDuplicate} className="w-full py-3 rounded-xl text-white bg-jnu-blue hover:bg-jnu-blue/80 font-bold transition shadow-md">
+                네, 기존 민원에 공감할게요 ❤️
+              </button>
+              <button onClick={() => { setDuplicateReport(null); submitNewReport(subCategory === "기타 (직접 입력)" ? customIssue : subCategory); }} className="w-full py-3 rounded-xl text-gray-500 bg-gray-100 hover:bg-gray-200 font-bold transition">
+                아니오, 따로 제보할게요
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

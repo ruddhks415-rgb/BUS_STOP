@@ -491,10 +491,28 @@ export const STOPS = [
   }
 ];
 
-export const REPORTS = [
-  { id: "r1", stopId: "4346", stopName: "전남대", issueType: "지붕파손", description: "비가 오면 비가 새요", date: "2026-07-15", status: "접수완료" },
-  { id: "r2", stopId: "4406", stopName: "전남대스포츠센터", issueType: "의자파손", description: "의자 다리가 부러졌습니다", date: "2026-07-16", status: "처리중" },
-  { id: "r3", stopId: "4663", stopName: "전남대용봉탑", issueType: "조명불량", description: "밤에 너무 어두워서 버스 타기가 힘들어요", date: "2026-07-17", status: "처리완료" },
-  { id: "r4", stopId: "4410", stopName: "전남대공과대학", issueType: "청결문제", description: "쓰레기가 너무 많아요", date: "2026-07-18", status: "접수완료" },
-  { id: "r5", stopId: "4346", stopName: "전남대", issueType: "기타", description: "노선표가 뜯어져있어요", date: "2026-07-18", status: "접수완료" },
+export interface Report {
+  id: string;
+  stopId: string;
+  stopName: string;
+  issueType: string;
+  description: string;
+  date: string;
+  status: "접수됨" | "검토중" | "제출됨" | "해결됨" | "반려";
+  type: "bus" | "campus";
+  reportCode: string;
+  photoUrl?: string;
+  statusHistory: { status: string; at: string; memo?: string }[];
+  empathyCount: number;
+  isUrgent: boolean;
+  lat: number;
+  lng: number;
+}
+
+export const REPORTS: Report[] = [
+  { id: "r1", stopId: "4346", stopName: "전남대", issueType: "지붕파손", description: "비가 오면 비가 새요", date: "2026-07-15", status: "접수됨", type: "bus", reportCode: "B0001", statusHistory: [{ status: "접수됨", at: "2026-07-15T10:00:00Z" }], empathyCount: 2, isUrgent: false, lat: 35.170063, lng: 126.903813 },
+  { id: "r2", stopId: "4406", stopName: "전남대스포츠센터", issueType: "의자파손", description: "의자 다리가 부러졌습니다", date: "2026-07-16", status: "검토중", type: "bus", reportCode: "B0002", statusHistory: [{ status: "접수됨", at: "2026-07-16T10:00:00Z" }, { status: "검토중", at: "2026-07-16T15:00:00Z" }], empathyCount: 0, isUrgent: false, lat: 35.175062, lng: 126.912437 },
+  { id: "r3", stopId: "4663", stopName: "전남대용봉탑", issueType: "조명불량", description: "밤에 너무 어두워서 버스 타기가 힘들어요", date: "2026-07-17", status: "해결됨", type: "bus", reportCode: "B0003", statusHistory: [{ status: "접수됨", at: "2026-07-17T09:00:00Z" }, { status: "해결됨", at: "2026-07-18T10:00:00Z", memo: "전구 교체 완료" }], empathyCount: 5, isUrgent: true, lat: 35.175062, lng: 126.905937 },
+  { id: "r4", stopId: "4410", stopName: "전남대공과대학", issueType: "청결문제", description: "쓰레기가 너무 많아요", date: "2026-07-18", status: "접수됨", type: "bus", reportCode: "B0004", statusHistory: [{ status: "접수됨", at: "2026-07-18T11:00:00Z" }], empathyCount: 1, isUrgent: false, lat: 35.178312, lng: 126.912312 },
+  { id: "r5", stopId: "4346", stopName: "전남대", issueType: "기타", description: "노선표가 뜯어져있어요", date: "2026-07-18", status: "접수됨", type: "bus", reportCode: "B0005", statusHistory: [{ status: "접수됨", at: "2026-07-18T14:00:00Z" }], empathyCount: 0, isUrgent: false, lat: 35.170063, lng: 126.903813 },
 ];
