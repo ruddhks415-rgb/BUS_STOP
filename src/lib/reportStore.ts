@@ -3,53 +3,30 @@ export type { Report };
 
 const STORAGE_KEY = "bus_stop_reports";
 
-// Initialize store with mock data if empty
-export const initializeStore = () => {
-  if (typeof window === "undefined") return;
-  const existing = localStorage.getItem(STORAGE_KEY);
-  if (!existing) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_REPORTS));
-  }
-};
+// initializeStore is no longer used for Vercel KV
 
-export const getReports = async (): Promise<Report[]> => {
-  if (typeof window === "undefined") return [];
-  const data = localStorage.getItem(STORAGE_KEY);
-  if (data) {
-    return JSON.parse(data);
-  }
-  return INITIAL_REPORTS;
+export const getReports = async (type?: string, status?: string): Promise<Report[]> => {
+  let url = "/api/reports";
+  const params = new URLSearchParams();
+  if (type) params.append("type", type);
+  if (status) params.append("status", status);
+  if (params.toString()) url += `?${params.toString()}`;
+
+  const res = await fetch(url);
+  if (!res.ok) return [];
+  return res.json();
 };
 
 export const addReport = async (
   reportData: Omit<Report, "id" | "reportCode" | "status" | "statusHistory" | "empathyCount" | "isUrgent" | "date">
 ): Promise<Report> => {
-  const reports = await getReports();
-  
-  const id = "r" + (Date.now().toString() + Math.floor(Math.random() * 1000));
-  
-  const typeReports = reports.filter(r => r.type === reportData.type);
-  const nextSeq = typeReports.length + 1;
-  const prefix = reportData.type === "bus" ? "B" : "C";
-  const reportCode = `${prefix}${String(nextSeq).padStart(4, '0')}`;
-  
-  const now = new Date();
-  
-  const newReport: Report = {
-    ...reportData,
-    id,
-    reportCode,
-    date: now.toISOString().split('T')[0],
-    status: "접수됨",
-    statusHistory: [{ status: "접수됨", at: now.toISOString() }],
-    empathyCount: 0,
-    isUrgent: false,
-  };
-  
-  reports.unshift(newReport);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
-  
-  return newReport;
+  const res = await fetch("/api/reports", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(reportData),
+  });
+  if (!res.ok) throw new Error("Failed to add report");
+  return res.json();
 };
 
 export const updateReportStatus = async (
@@ -57,40 +34,28 @@ export const updateReportStatus = async (
   newStatus: Report["status"], 
   memo?: string
 ): Promise<Report | null> => {
-  const reports = await getReports();
-  const index = reports.findIndex(r => r.id === id);
-  
-  if (index === -1) return null;
-  
-  reports[index].status = newStatus;
-  reports[index].statusHistory.push({
-    status: newStatus,
-    at: new Date().toISOString(),
-    memo
+  const res = await fetch(`/api/reports/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: newStatus, memo }),
   });
-  
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
-  return reports[index];
+  if (!res.ok) return null;
+  return res.json();
 };
 
 export const addEmpathy = async (id: string): Promise<boolean> => {
-  const reports = await getReports();
-  const index = reports.findIndex(r => r.id === id);
-  
-  if (index === -1) return false;
-  
-  reports[index].empathyCount += 1;
-  if (reports[index].empathyCount >= 5) {
-    reports[index].isUrgent = true;
-  }
-  
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
-  return true;
+  const res = await fetch(`/api/reports/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "empathy" }),
+  });
+  return res.ok;
 };
 
 export const getReportByCode = async (code: string): Promise<Report | null> => {
-  const reports = await getReports();
-  return reports.find(r => r.reportCode === code.toUpperCase()) || null;
+  const res = await fetch(`/api/reports/lookup?code=${code}`);
+  if (!res.ok) return null;
+  return res.json();
 };
 
 export const checkDuplicateReport = async (stopId: string, issueType: string): Promise<Report | null> => {
