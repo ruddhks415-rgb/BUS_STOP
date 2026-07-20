@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getKvReports, setKvReports } from "@/lib/kvStore";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const reports = await getKvReports();
   const { id } = await params;

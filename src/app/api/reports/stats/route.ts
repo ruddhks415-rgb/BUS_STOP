@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getKvReports } from "@/lib/kvStore";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const reports = await getKvReports();

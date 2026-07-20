@@ -12,7 +12,7 @@ export const getReports = async (type?: string, status?: string): Promise<Report
   if (status) params.append("status", status);
   if (params.toString()) url += `?${params.toString()}`;
 
-  const res = await fetch(url);
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) return [];
   return res.json();
 };
@@ -53,7 +53,7 @@ export const addEmpathy = async (id: string): Promise<boolean> => {
 };
 
 export const getReportByCode = async (code: string): Promise<Report | null> => {
-  const res = await fetch(`/api/reports/lookup?code=${code}`);
+  const res = await fetch(`/api/reports/lookup?code=${code}`, { cache: "no-store" });
   if (!res.ok) return null;
   return res.json();
 };
