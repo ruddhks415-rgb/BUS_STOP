@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Search, CheckCircle, Clock, AlertCircle } from "lucide-react";
-import { getReportByCode, getMyReportCodes, Report } from "@/lib/reportStore";
+import { ArrowLeft, Search, CheckCircle, Clock, AlertCircle, Trash2 } from "lucide-react";
+import { getReportByCode, getMyReportCodes, Report, deleteReport, removeMyReportCode } from "@/lib/reportStore";
 import { useEffect } from "react";
 
 export default function MyReportPage() {
@@ -40,6 +40,32 @@ export default function MyReportPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     handleSearchCode(reportCode);
+  };
+
+  const handleDelete = async (reportId: string, code: string) => {
+    if (window.confirm("정말로 이 제보를 취소하시겠습니까?\n취소 시 접수된 제보는 삭제되며 복구할 수 없습니다.")) {
+      setLoading(true);
+      const success = await deleteReport(reportId);
+      if (success) {
+        removeMyReportCode(code);
+        alert("제보가 성공적으로 취소(삭제)되었습니다.");
+        setReport(null);
+        setSearched(false);
+        setReportCode("");
+        
+        // 목록 갱신
+        const codes = getMyReportCodes();
+        if (codes.length > 0) {
+          const results = await Promise.all(codes.map(c => getReportByCode(c)));
+          setMyReports(results.filter((r): r is Report => r !== null));
+        } else {
+          setMyReports([]);
+        }
+      } else {
+        alert("오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+      }
+      setLoading(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -160,6 +186,17 @@ export default function MyReportPage() {
                 ))}
               </div>
             </div>
+            
+            {/* 제보 취소하기 버튼 */}
+            {(report.status === "접수됨" || report.status === "검토중") && (
+              <button 
+                onClick={() => handleDelete(report.id, report.reportCode)}
+                className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 border border-red-200 py-3.5 rounded-xl font-bold hover:bg-red-100 transition shadow-sm"
+              >
+                <Trash2 size={18} />
+                제보 취소하기 (삭제)
+              </button>
+            )}
           </div>
         ) : (
           myReports.length > 0 && (

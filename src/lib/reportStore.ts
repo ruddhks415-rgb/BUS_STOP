@@ -46,6 +46,13 @@ export const updateReportStatus = async (
   return res.json();
 };
 
+export const deleteReport = async (id: string): Promise<boolean> => {
+  const res = await fetch(`/api/reports/${id}`, {
+    method: "DELETE",
+  });
+  return res.ok;
+};
+
 export const addEmpathy = async (id: string): Promise<boolean> => {
   const res = await fetch(`/api/reports/${id}`, {
     method: "PATCH",
@@ -92,4 +99,11 @@ export const getMyReportCodes = (): string[] => {
     }
   }
   return [];
+};
+
+export const removeMyReportCode = (code: string) => {
+  if (typeof window === "undefined") return;
+  const existing = getMyReportCodes();
+  const updated = existing.filter(c => c !== code);
+  localStorage.setItem(MY_REPORTS_KEY, JSON.stringify(updated));
 };

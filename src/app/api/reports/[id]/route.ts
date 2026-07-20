@@ -80,3 +80,21 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    
+    const reports = await sql`SELECT * FROM reports WHERE id = ${id}`;
+    if (reports.length === 0) {
+      return NextResponse.json({ error: "Report not found" }, { status: 404 });
+    }
+
+    await sql`DELETE FROM reports WHERE id = ${id}`;
+    
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("DELETE /api/reports/[id] error:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
