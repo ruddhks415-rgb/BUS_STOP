@@ -1,23 +1,27 @@
 import { NextResponse } from "next/server";
-import { getKvReports } from "@/lib/kvStore";
+import { sql } from "@/lib/db";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const reports = await getKvReports();
+    const totalResult = await sql`SELECT COUNT(*) FROM reports`;
+    const resolvedResult = await sql`SELECT COUNT(*) FROM reports WHERE status = '해결됨'`;
     
-    let totalCount = reports.length;
-    let resolvedCount = 0;
+    const statusResult = await sql`SELECT status, COUNT(*) FROM reports GROUP BY status`;
+    const categoryResult = await sql`SELECT issue_type, COUNT(*) FROM reports GROUP BY issue_type`;
+
+    const totalCount = parseInt(totalResult[0].count);
+    const resolvedCount = parseInt(resolvedResult[0].count);
     
     const statusCounts: Record<string, number> = {};
-    const categoryCounts: Record<string, number> = {};
+    statusResult.forEach(row => {
+      statusCounts[row.status] = parseInt(row.count);
+    });
 
-    reports.forEach(r => {
-      if (r.status === "해결됨") resolvedCount++;
-      
-      statusCounts[r.status] = (statusCounts[r.status] || 0) + 1;
-      categoryCounts[r.issueType] = (categoryCounts[r.issueType] || 0) + 1;
+    const categoryCounts: Record<string, number> = {};
+    categoryResult.forEach(row => {
+      categoryCounts[row.issue_type] = parseInt(row.count);
     });
 
     return NextResponse.json({
