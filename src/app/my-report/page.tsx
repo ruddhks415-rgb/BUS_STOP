@@ -121,6 +121,12 @@ export default function MyReportPage() {
                     <div className="text-sm text-gray-600 mt-1 bg-gray-50 p-3 rounded-lg">{report.description}</div>
                   </div>
                 )}
+                {report.photoUrl && (
+                  <div>
+                    <div className="text-xs font-bold text-gray-400 mb-2">첨부 사진</div>
+                    <img src={report.photoUrl} alt="첨부된 현장 사진" className="w-full h-auto rounded-xl border border-gray-200" />
+                  </div>
+                )}
                 <div>
                   <div className="text-xs font-bold text-gray-400">공감 수</div>
                   <div className="font-bold text-pink-500 flex items-center gap-1">

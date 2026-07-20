@@ -17,7 +17,29 @@ function ReportForm() {
   const [customIssue, setCustomIssue] = useState("");
   const [description, setDescription] = useState("");
 
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [duplicateReport, setDuplicateReport] = useState<Report | null>(null);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const validTypes = ["image/jpeg", "image/png", "image/webp", "image/heic"];
+      if (!validTypes.includes(file.type) && !file.name.toLowerCase().endsWith('.heic')) {
+        alert("jpg, png, webp, heic 이미지 형식만 업로드 가능합니다.");
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert("파일 크기는 5MB를 초과할 수 없습니다.");
+        return;
+      }
+      setPhoto(file);
+    }
+  };
+
+  const removePhoto = () => {
+    setPhoto(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,13 +67,32 @@ function ReportForm() {
 
   const submitNewReport = async (issueType: string) => {
     if (!stop) return;
+    setIsSubmitting(true);
     try {
+      let photoUrl = undefined;
+      
+      if (photo) {
+        const formData = new FormData();
+        formData.append("file", photo);
+        const res = await fetch(`/api/upload?filename=${encodeURIComponent(photo.name)}`, {
+          method: "POST",
+          body: photo,
+        });
+        if (res.ok) {
+          const blob = await res.json();
+          photoUrl = blob.url;
+        } else {
+          alert("이미지 업로드에 실패했습니다. 이미지가 제외된 채로 제보됩니다.");
+        }
+      }
+
       const newReport = await addReport({
         stopId,
         stopName: stop.name,
         issueType,
         description,
         type: "bus",
+        photoUrl,
         lat: stop.lat,
         lng: stop.lng
       });
@@ -60,6 +101,8 @@ function ReportForm() {
       router.push("/bus/report/complete");
     } catch (err) {
       alert("제보 등록 중 오류가 발생했습니다.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -156,11 +199,27 @@ function ReportForm() {
           {/* 사진 첨부 (UI) */}
           <div>
             <label className="block text-base font-bold text-gray-800 mb-3">사진 첨부 (선택)</label>
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center bg-white text-gray-400 cursor-pointer hover:bg-gray-50 transition hover:border-gray-400">
-              <Camera size={36} className="mb-3 text-gray-400" />
-              <p className="text-sm font-medium">클릭하여 사진 업로드</p>
-              <p className="text-xs text-gray-400 mt-1">(더미 기능입니다)</p>
-            </div>
+            {!photo ? (
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-white hover:bg-gray-50 transition hover:border-gray-400 text-gray-400">
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <Camera className="w-8 h-8 mb-2" />
+                  <p className="text-sm font-medium">클릭하여 사진 업로드</p>
+                </div>
+                <input type="file" accept="image/jpeg, image/png, image/webp, image/heic" className="hidden" onChange={handlePhotoChange} />
+              </label>
+            ) : (
+              <div className="flex items-center justify-between p-4 bg-jnu-green/10 border border-green-100 rounded-xl">
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <div className="p-2 bg-green-100 rounded-lg shrink-0">
+                    <Camera className="w-6 h-6 text-jnu-green" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-700 truncate">{photo.name}</span>
+                </div>
+                <button type="button" onClick={removePhoto} className="p-2 text-gray-400 hover:text-red-500 transition">
+                  <span className="text-xl leading-none">&times;</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* 상세 설명 */}
@@ -177,10 +236,17 @@ function ReportForm() {
           {/* 제출 버튼 */}
           <button
             type="submit"
-            className="mt-2 bg-jnu-green text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-jnu-green/80 transition shadow-lg w-full"
+            disabled={isSubmitting}
+            className={`mt-2 font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-lg w-full ${isSubmitting ? "bg-gray-400 text-white cursor-not-allowed" : "bg-jnu-green text-white hover:bg-jnu-green/80"}`}
           >
-            <Upload size={22} />
-            제보 제출하기
+            {isSubmitting ? (
+              <span>업로드 중...</span>
+            ) : (
+              <>
+                <Upload size={22} />
+                제보 제출하기
+              </>
+            )}
           </button>
         </form>
       </main>

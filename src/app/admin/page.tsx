@@ -159,6 +159,7 @@ export default function AdminPage() {
                   <th className="px-4 py-3">대상</th>
                   <th className="px-4 py-3">유형</th>
                   <th className="px-4 py-3 min-w-[200px]">상세 내용</th>
+                  <th className="px-4 py-3 text-center">사진</th>
                   <th className="px-4 py-3">공감</th>
                   <th className="px-4 py-3">상태 변경</th>
                 </tr>
@@ -175,6 +176,15 @@ export default function AdminPage() {
                     <td className="px-4 py-3 font-bold text-gray-900">{report.stopName}</td>
                     <td className="px-4 py-3 text-gray-700">{report.issueType}</td>
                     <td className="px-4 py-3 text-gray-600 truncate max-w-xs">{report.description}</td>
+                    <td className="px-4 py-3 text-center">
+                      {report.photoUrl ? (
+                        <a href={report.photoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-semibold text-xs">
+                          사진 보기
+                        </a>
+                      ) : (
+                        <span className="text-gray-400 text-xs">-</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1 font-bold text-gray-700">
                         {report.empathyCount > 0 && <span>{report.empathyCount}</span>}

@@ -17,6 +17,7 @@ function CampusReportForm() {
   const [customIssue, setCustomIssue] = useState("");
   const [description, setDescription] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!building) {
     return (
@@ -57,14 +58,32 @@ function CampusReportForm() {
 
   const submitNewReport = async (issueType: string) => {
     if (!building) return;
+    setIsSubmitting(true);
     try {
+      let photoUrl = undefined;
+      
+      if (photo) {
+        const formData = new FormData();
+        formData.append("file", photo);
+        const res = await fetch(`/api/upload?filename=${encodeURIComponent(photo.name)}`, {
+          method: "POST",
+          body: photo,
+        });
+        if (res.ok) {
+          const blob = await res.json();
+          photoUrl = blob.url;
+        } else {
+          alert("이미지 업로드에 실패했습니다. 이미지가 제외된 채로 제보됩니다.");
+        }
+      }
+
       const newReport = await addReport({
         stopId: buildingId,
         stopName: building.name,
         issueType,
         description,
         type: "campus",
-        photoUrl: photo ? photo.name : undefined,
+        photoUrl,
         lat: building.lat,
         lng: building.lng
       });
@@ -73,6 +92,8 @@ function CampusReportForm() {
       router.push("/campus/report/complete");
     } catch (err) {
       alert("제보 등록 중 오류가 발생했습니다.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -86,7 +107,17 @@ function CampusReportForm() {
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setPhoto(e.target.files[0]);
+      const file = e.target.files[0];
+      const validTypes = ["image/jpeg", "image/png", "image/webp", "image/heic"];
+      if (!validTypes.includes(file.type) && !file.name.toLowerCase().endsWith('.heic')) {
+        alert("jpg, png, webp, heic 이미지 형식만 업로드 가능합니다.");
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert("파일 크기는 5MB를 초과할 수 없습니다.");
+        return;
+      }
+      setPhoto(file);
     }
   };
 
@@ -212,10 +243,17 @@ function CampusReportForm() {
 
           <button
             type="submit"
-            className="mt-2 bg-jnu-blue text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-jnu-blue/80 transition shadow-lg w-full"
+            disabled={isSubmitting}
+            className={`mt-2 font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition shadow-lg w-full ${isSubmitting ? "bg-gray-400 text-white cursor-not-allowed" : "bg-jnu-blue text-white hover:bg-jnu-blue/80"}`}
           >
-            <Upload size={22} />
-            제보 제출하기
+            {isSubmitting ? (
+              <span>업로드 중...</span>
+            ) : (
+              <>
+                <Upload size={22} />
+                제보 제출하기
+              </>
+            )}
           </button>
         </form>
       </main>
