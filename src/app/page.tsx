@@ -1,98 +1,168 @@
-"use client";
+import Link from "next/link";
+import { BusFront, Building2, Search } from "lucide-react";
+import BrandingHeader from "@/components/BrandingHeader";
+import { getStatsData } from "@/lib/stats";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { ArrowRight, BusFront, Building2, Search } from "lucide-react";
+export const dynamic = 'force-dynamic';
 
-export default function Home() {
-  const router = useRouter();
-  const [showDesc, setShowDesc] = useState(false);
+function getIssueIcon(issueType: string) {
+  if (issueType.includes("파손") || issueType.includes("노후")) return "🔧";
+  if (issueType.includes("조명") || issueType.includes("전기")) return "💡";
+  if (issueType.includes("청결") || issueType.includes("위생") || issueType.includes("쓰레기")) return "🧹";
+  if (issueType.includes("안전")) return "⚠️";
+  if (issueType.includes("버스") || issueType.includes("운행")) return "🚌";
+  if (issueType.includes("혼잡") || issueType.includes("공간")) return "👥";
+  if (issueType.includes("편의시설")) return "🚻";
+  if (issueType.includes("소음")) return "🔊";
+  return "📌";
+}
+
+export default async function Home() {
+  const stats = await getStatsData();
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
-      {/* 로고 및 브랜딩 */}
-      <div className="text-center max-w-lg mb-12 min-h-[120px] flex flex-col items-center justify-center">
-        <button 
-          onClick={() => setShowDesc(!showDesc)}
-          className="group focus:outline-none"
-        >
-          <h1 
-            className="font-extrabold text-jnu-green tracking-tight mb-4 hover:scale-105 transition-transform duration-300"
-            style={{ fontSize: "3.5rem" }}
-          >
-            늘품
-          </h1>
-        </button>
+      
+      {/* 1. 로고 및 브랜딩 (클라이언트 컴포넌트) */}
+      <BrandingHeader />
+
+      <div className="w-full max-w-5xl flex flex-col gap-10">
         
-        <div className={`transition-all duration-500 ease-in-out overflow-hidden ${showDesc ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
-          <p className="text-gray-500 text-sm leading-relaxed mt-2">
-            '앞으로 좋게 발전할 품질이나 품성'을 뜻하는 순우리말.<br />
-            더 나은 전남대, 그 변화의 시작이 될 우리의 가능성
-          </p>
+        {/* 2. 전체 통계 섹션 */}
+        <section>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* 누적 접수 통계 */}
+            <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center text-center h-32 hover:shadow-md transition-shadow">
+              <span className="text-gray-500 text-sm font-bold mb-2">누적 접수 민원</span>
+              {stats.total > 0 ? (
+                <div className="text-gray-900 font-extrabold text-4xl">
+                  {stats.total} <span className="text-lg font-medium text-gray-500">건</span>
+                </div>
+              ) : (
+                <div className="text-gray-400 text-sm mt-1">아직 접수된 민원이 없어요.<br/>첫 제보자가 되어보세요!</div>
+              )}
+            </div>
+            
+            {/* 해결 완료 통계 */}
+            <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center text-center h-32 hover:shadow-md transition-shadow">
+              <span className="text-gray-500 text-sm font-bold mb-2">해결 완료</span>
+              {stats.total > 0 ? (
+                <div className="flex flex-col items-center">
+                  <div className="text-jnu-green font-extrabold text-4xl flex items-baseline gap-1">
+                    {stats.resolved} <span className="text-lg font-medium text-gray-500">건</span>
+                  </div>
+                  <div className="text-sm font-bold text-gray-400 mt-1">
+                    (해결률 {stats.resolvedRate}%)
+                  </div>
+                </div>
+              ) : (
+                <div className="text-gray-300 text-3xl font-extrabold mt-1">-</div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* 3. 인기 민원 TOP 3 섹션 */}
+        {stats.topEmpathy.length > 0 && (
+          <section>
+            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              🔥 지금 가장 공감받는 민원
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {stats.topEmpathy.map((report) => (
+                <Link 
+                  href={report.type === "bus" ? "/bus" : "/campus"} 
+                  key={report.id}
+                  className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all flex flex-col h-full group"
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <span className="text-2xl group-hover:scale-110 transition-transform" title={report.issueType}>
+                      {getIssueIcon(report.issueType)}
+                    </span>
+                    <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${report.type === "bus" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
+                      {report.type === "bus" ? "버스" : "캠퍼스"}
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-gray-900 mb-1">{report.stopName}</h3>
+                  <p className="text-sm text-gray-500 mb-4 flex-1 line-clamp-2">{report.issueType}</p>
+                  <div className="font-bold text-pink-500 text-sm flex items-center gap-1">
+                    👍 {report.empathyCount}명 공감
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <div className="flex items-center gap-4">
+          <hr className="flex-1 border-gray-200" />
+          <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">제보 및 조회</span>
+          <hr className="flex-1 border-gray-200" />
         </div>
-      </div>
 
-      {/* 메뉴 카드 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
-        {/* 버스 정류장 민원 카드 */}
-        <button
-          onClick={() => router.push("/bus")}
-          className="group relative bg-white border border-gray-200 rounded-3xl p-8 flex flex-col items-center text-center shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-jnu-green/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <div className="relative z-10">
-            <div className="w-20 h-20 bg-jnu-green/10 text-jnu-green rounded-2xl flex items-center justify-center mb-6 mx-auto group-hover:scale-110 transition-transform duration-300">
-              <BusFront size={40} />
+        {/* 4. 기존 메뉴 카드 (서버 컴포넌트로 변경되어 Link 태그 사용) */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* 버스 정류장 민원 카드 */}
+          <Link
+            href="/bus"
+            className="group relative bg-white border border-gray-200 rounded-3xl p-8 flex flex-col items-center text-center shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-jnu-green/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="w-20 h-20 bg-jnu-green/10 text-jnu-green rounded-2xl flex items-center justify-center mb-6 mx-auto group-hover:scale-110 transition-transform duration-300">
+                <BusFront size={40} />
+              </div>
+              <h2 className="text-xl font-bold text-gray-800 mb-3">버스 정류장 민원</h2>
+              <p className="text-gray-500 mb-6 font-medium text-sm">
+                전남대 주변 버스 정류장의<br />불편사항을 제보해 주세요.
+              </p>
+              <div className="mt-auto flex flex-row items-center justify-center text-jnu-green font-semibold whitespace-nowrap bg-green-50 px-4 py-2 rounded-full group-hover:bg-green-100 transition">
+                바로가기
+              </div>
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-3">버스 정류장 민원</h2>
-            <p className="text-gray-500 mb-6 font-medium">
-              전남대 주변 버스 정류장의<br />불편사항을 제보해 주세요.
-            </p>
-            <div className="flex flex-row items-center justify-center gap-2 text-jnu-green font-semibold group-hover:gap-3 transition-all whitespace-nowrap">
-              <span>바로가기</span> <ArrowRight size={20} className="relative -top-0.5" />
-            </div>
-          </div>
-        </button>
+          </Link>
 
-        {/* 캠퍼스 건물 민원 카드 */}
-        <button
-          onClick={() => router.push("/campus")}
-          className="group relative bg-white border border-gray-200 rounded-3xl p-8 flex flex-col items-center text-center shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-jnu-blue/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <div className="relative z-10">
-            <div className="w-20 h-20 bg-jnu-blue/10 text-jnu-blue rounded-2xl flex items-center justify-center mb-6 mx-auto group-hover:scale-110 transition-transform duration-300">
-              <Building2 size={40} />
+          {/* 캠퍼스 건물 민원 카드 */}
+          <Link
+            href="/campus"
+            className="group relative bg-white border border-gray-200 rounded-3xl p-8 flex flex-col items-center text-center shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-jnu-blue/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="w-20 h-20 bg-jnu-blue/10 text-jnu-blue rounded-2xl flex items-center justify-center mb-6 mx-auto group-hover:scale-110 transition-transform duration-300">
+                <Building2 size={40} />
+              </div>
+              <h2 className="text-xl font-bold text-gray-800 mb-3">캠퍼스 건물 민원</h2>
+              <p className="text-gray-500 mb-6 font-medium text-sm">
+                교내 건물 시설물의 고장이나<br />보수가 필요한 곳을 알려주세요.
+              </p>
+              <div className="mt-auto flex flex-row items-center justify-center text-jnu-blue font-semibold whitespace-nowrap bg-blue-50 px-4 py-2 rounded-full group-hover:bg-blue-100 transition">
+                바로가기
+              </div>
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-3">캠퍼스 건물 민원</h2>
-            <p className="text-gray-500 mb-6 font-medium">
-              교내 건물 시설물의 고장이나<br />보수가 필요한 곳을 알려주세요.
-            </p>
-            <div className="flex flex-row items-center justify-center gap-2 text-jnu-blue font-semibold group-hover:gap-3 transition-all whitespace-nowrap">
-              <span>바로가기</span> <ArrowRight size={20} className="relative -top-0.5" />
-            </div>
-          </div>
-        </button>
+          </Link>
 
-        {/* 내 제보 조회 카드 */}
-        <button
-          onClick={() => router.push("/my-report")}
-          className="group relative bg-white border border-gray-200 rounded-3xl p-8 flex flex-col items-center text-center shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <div className="relative z-10">
-            <div className="w-20 h-20 bg-yellow-500/10 text-yellow-500 rounded-2xl flex items-center justify-center mb-6 mx-auto group-hover:scale-110 transition-transform duration-300">
-              <Search size={40} />
+          {/* 내 제보 조회 카드 */}
+          <Link
+            href="/my-report"
+            className="group relative bg-white border border-gray-200 rounded-3xl p-8 flex flex-col items-center text-center shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="w-20 h-20 bg-yellow-500/10 text-yellow-500 rounded-2xl flex items-center justify-center mb-6 mx-auto group-hover:scale-110 transition-transform duration-300">
+                <Search size={40} />
+              </div>
+              <h2 className="text-xl font-bold text-gray-800 mb-3">내 제보 내역</h2>
+              <p className="text-gray-500 mb-6 font-medium text-sm">
+                이 기기에서 제보한 내역이나<br />제보 코드로 처리 현황을 봅니다.
+              </p>
+              <div className="mt-auto flex flex-row items-center justify-center text-yellow-600 font-semibold whitespace-nowrap bg-yellow-50 px-4 py-2 rounded-full group-hover:bg-yellow-100 transition">
+                조회하기
+              </div>
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-3">내 제보 조회</h2>
-            <p className="text-gray-500 mb-6 font-medium">
-              제보 시 발급받은 코드로<br />처리 현황을 확인해 보세요.
-            </p>
-            <div className="flex flex-row items-center justify-center gap-2 text-yellow-600 font-semibold group-hover:gap-3 transition-all whitespace-nowrap">
-              <span>조회하기</span> <ArrowRight size={20} className="relative -top-0.5" />
-            </div>
-          </div>
-        </button>
+          </Link>
+        </section>
+
       </div>
 
       <footer className="mt-16 text-gray-400 text-sm">
