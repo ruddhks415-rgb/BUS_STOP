@@ -44,7 +44,7 @@ const STREET_ISSUE_CATEGORIES = [
   {
     id: "유기동물/기타",
     title: "유기동물/기타",
-    subcategories: ["유기묘·유기견", "기타 민원"]
+    subcategories: ["유기묘·유기견"]
   }
 ];
 
