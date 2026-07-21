@@ -134,7 +134,7 @@ export default async function Home() {
               </div>
               <h2 className="text-xl font-bold text-gray-800 mb-3">캠퍼스 건물 민원</h2>
               <p className="text-gray-500 mb-6 font-medium text-sm">
-                교내 건물 시설물의 고장이나<br />보수가 필요한 곳을 알려주세요.
+                교내 건물 시설물 고장 및<br />보수 사항을 제보해 주세요.
               </p>
               <div className="mt-auto flex flex-row items-center justify-center text-jnu-blue font-semibold whitespace-nowrap bg-blue-50 px-4 py-2 rounded-full group-hover:bg-blue-100 transition">
                 바로가기
@@ -154,7 +154,7 @@ export default async function Home() {
               </div>
               <h2 className="text-xl font-bold text-gray-800 mb-3">길거리 민원</h2>
               <p className="text-gray-500 mb-6 font-medium text-sm">
-                캠퍼스 밖이나 도로/보도의<br />위험한 시설물 등을 제보해 주세요.
+                캠퍼스 외부 길거리의<br />위험 요소를 제보해 주세요.
               </p>
               <div className="mt-auto flex flex-row items-center justify-center text-red-600 font-semibold whitespace-nowrap bg-red-50 px-4 py-2 rounded-full group-hover:bg-red-100 transition">
                 바로가기
@@ -174,7 +174,7 @@ export default async function Home() {
               </div>
               <h2 className="text-xl font-bold text-gray-800 mb-3">내 제보 내역</h2>
               <p className="text-gray-500 mb-6 font-medium text-sm">
-                이 기기에서 제보한 내역이나<br />제보 코드로 처리 현황을 봅니다.
+                나의 민원 제보 내역과<br />처리 현황을 조회해 보세요.
               </p>
               <div className="mt-auto flex flex-row items-center justify-center text-yellow-600 font-semibold whitespace-nowrap bg-yellow-50 px-4 py-2 rounded-full group-hover:bg-yellow-100 transition">
                 조회하기
