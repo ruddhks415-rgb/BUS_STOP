@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 
 export default function BrandingHeader() {
@@ -11,12 +12,15 @@ export default function BrandingHeader() {
         onClick={() => setShowDesc(!showDesc)}
         className="group focus:outline-none"
       >
-        <h1 
-          className="font-extrabold text-jnu-green tracking-tight mb-4 hover:scale-105 transition-transform duration-300"
-          style={{ fontSize: "3.5rem" }}
-        >
-          늘품
-        </h1>
+        <div className="hover:scale-105 transition-transform duration-300 relative w-72 h-36 sm:w-[28rem] sm:h-56 mb-4 flex items-center justify-center mix-blend-multiply">
+          <Image
+            src="/neullpum-logo.png"
+            alt="늘품 로고"
+            fill
+            className="object-contain"
+            priority
+          />
+        </div>
       </button>
       
       <div className={`transition-all duration-500 ease-in-out overflow-hidden ${showDesc ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
