@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'stop_id is required' }, { status: 400 });
   }
 
-  const apiKey = process.env.NEXT_PUBLIC_GWANGJU_BUS_API_KEY;
+  const apiKey = process.env.NEXT_PUBLIC_GWANGJU_BUS_API_KEY || '';
   // 광주광역시 버스도착정보 API 기본 엔드포인트
   const url = `http://apis.data.go.kr/6290000/busarrivalinfo/getBusArrivalInfo?serviceKey=${apiKey}&BUSSTOP_ID=${stopId}`;
 

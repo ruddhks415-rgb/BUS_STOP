@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { getReports, updateReportStatus, Report } from "@/lib/reportStore";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { LogOut, FileText, ArrowLeft, Flame, Filter, ArrowUpDown } from "lucide-react";
+import { LogOut, FileText, ArrowLeft, Flame, Filter, ArrowUpDown, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
+import AIReportEditor, { AIReport, AIReportContent } from "@/components/AIReportEditor";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
 const STATUS_OPTIONS: Report["status"][] = ["접수됨", "검토중", "제출됨", "해결됨", "반려"];
@@ -22,6 +23,11 @@ export default function AdminPage() {
   // Status Modal
   const [statusModal, setStatusModal] = useState<{ id: string; status: Report["status"]; memo: string } | null>(null);
 
+  // AI Reports State
+  const [aiReports, setAiReports] = useState<AIReport[]>([]);
+  const [activeAIReport, setActiveAIReport] = useState<AIReport | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
   useEffect(() => {
     loadReports();
   }, []);
@@ -29,7 +35,82 @@ export default function AdminPage() {
   const loadReports = async () => {
     const data = await getReports();
     setReports(data);
+    
+    // Fetch AI reports
+    try {
+      const res = await fetch("/api/ai/reports");
+      if (res.ok) {
+        const aiData = await res.json();
+        setAiReports(aiData);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
     setLoading(false);
+  };
+
+  const handleGenerateAIReport = async (targetReports: Report[], type: "single" | "comprehensive") => {
+    setIsGenerating(true);
+    try {
+      // 1. Generate content via Gemini
+      const genRes = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reports: targetReports, type })
+      });
+      if (!genRes.ok) {
+        throw new Error("AI 리포트 생성에 실패했습니다. (API Key 설정을 확인하세요)");
+      }
+      const { result } = await genRes.json();
+
+      // 2. Save to DB
+      const saveRes = await fetch("/api/ai/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type,
+          targetReportIds: targetReports.map(r => r.id),
+          aiGeneratedContent: result
+        })
+      });
+      if (!saveRes.ok) throw new Error("AI 리포트 저장에 실패했습니다.");
+      
+      const newAiReport = await saveRes.json();
+      setAiReports([newAiReport, ...aiReports]);
+      setActiveAIReport(newAiReport);
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleSaveAIReport = async (id: string, newContent: AIReportContent) => {
+    try {
+      const res = await fetch(`/api/ai/reports/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ editedContent: newContent })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setAiReports(aiReports.map(r => r.id === id ? updated : r));
+        setActiveAIReport(updated);
+      }
+    } catch (e) {
+      alert("리포트 저장에 실패했습니다.");
+    }
+  };
+
+  const openAIReport = (reportId: string) => {
+    const existing = aiReports.find(ar => ar.type === "single" && ar.targetReportIds.includes(reportId));
+    if (existing) {
+      setActiveAIReport(existing);
+    } else {
+      const target = reports.find(r => r.id === reportId);
+      if (target) handleGenerateAIReport([target], "single");
+    }
   };
 
   const handleLogout = async () => {
@@ -149,7 +230,19 @@ export default function AdminPage() {
 
         {/* Table */}
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">신고 목록 ({filteredReports.length}건)</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-bold text-gray-800">신고 목록 ({filteredReports.length}건)</h2>
+            {filteredReports.length >= 2 && (
+              <button 
+                onClick={() => handleGenerateAIReport(filteredReports, "comprehensive")}
+                disabled={isGenerating}
+                className="flex items-center gap-1 text-sm bg-purple-50 text-purple-600 border border-purple-200 px-3 py-1.5 rounded-full hover:bg-purple-100 transition font-semibold shadow-sm"
+              >
+                <Sparkles size={16} />
+                <span>{isGenerating ? "생성 중..." : "✨ 종합 리포트 생성"}</span>
+              </button>
+            )}
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left whitespace-nowrap">
               <thead className="bg-gray-50 text-gray-600 font-semibold border-b border-gray-200">
@@ -161,6 +254,7 @@ export default function AdminPage() {
                   <th className="px-4 py-3 min-w-[200px]">상세 내용</th>
                   <th className="px-4 py-3 text-center">사진</th>
                   <th className="px-4 py-3">공감</th>
+                  <th className="px-4 py-3 text-center">AI 리포트</th>
                   <th className="px-4 py-3">상태 변경</th>
                 </tr>
               </thead>
@@ -190,6 +284,15 @@ export default function AdminPage() {
                         {report.empathyCount > 0 && <span>{report.empathyCount}</span>}
                         {report.empathyCount >= 5 && <Flame size={16} className="text-red-500" />}
                       </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button 
+                        onClick={() => openAIReport(report.id)}
+                        disabled={isGenerating}
+                        className="px-3 py-1 bg-purple-50 text-purple-700 hover:bg-purple-100 font-semibold rounded-lg text-xs transition border border-purple-200"
+                      >
+                        {aiReports.find(ar => ar.type === "single" && ar.targetReportIds.includes(report.id)) ? "리포트 보기" : "✨ 생성"}
+                      </button>
                     </td>
                     <td className="px-4 py-3">
                       <select 
@@ -244,6 +347,15 @@ export default function AdminPage() {
             </div>
           </form>
         </div>
+      )}
+
+      {/* AI Report Editor Modal */}
+      {activeAIReport && (
+        <AIReportEditor
+          report={activeAIReport}
+          onSave={handleSaveAIReport}
+          onClose={() => setActiveAIReport(null)}
+        />
       )}
     </div>
   );
