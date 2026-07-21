@@ -5,7 +5,7 @@ export interface TopEmpathyReport {
   stopName: string;
   issueType: string;
   empathyCount: number;
-  type: "bus" | "campus";
+  type: "bus" | "campus" | "street";
 }
 
 export interface StatsData {
@@ -40,7 +40,7 @@ export async function getStatsData(): Promise<StatsData> {
       stopName: row.stopName,
       issueType: row.issueType,
       empathyCount: row.empathyCount,
-      type: row.type as "bus" | "campus",
+      type: row.type as "bus" | "campus" | "street",
     }));
 
     return {

@@ -499,7 +499,7 @@ export interface Report {
   description: string;
   date: string;
   status: "접수됨" | "검토중" | "제출됨" | "해결됨" | "반려";
-  type: "bus" | "campus";
+  type: "bus" | "campus" | "street";
   reportCode: string;
   photoUrl?: string;
   statusHistory: { status: string; at: string; memo?: string }[];

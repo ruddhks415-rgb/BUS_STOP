@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BusFront, Building2, Search } from "lucide-react";
+import { BusFront, Building2, Search, MapPin } from "lucide-react";
 import BrandingHeader from "@/components/BrandingHeader";
 import { getStatsData } from "@/lib/stats";
 
@@ -71,7 +71,7 @@ export default async function Home() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {stats.topEmpathy.map((report) => (
                 <Link 
-                  href={report.type === "bus" ? "/bus" : "/campus"} 
+                  href={report.type === "bus" ? "/bus" : report.type === "campus" ? "/campus" : "/street"} 
                   key={report.id}
                   className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all flex flex-col h-full group"
                 >
@@ -79,8 +79,8 @@ export default async function Home() {
                     <span className="text-2xl group-hover:scale-110 transition-transform" title={report.issueType}>
                       {getIssueIcon(report.issueType)}
                     </span>
-                    <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${report.type === "bus" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
-                      {report.type === "bus" ? "버스" : "캠퍼스"}
+                    <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${report.type === "bus" ? "bg-green-100 text-green-700" : report.type === "campus" ? "bg-blue-100 text-blue-700" : "bg-red-100 text-red-700"}`}>
+                      {report.type === "bus" ? "버스" : report.type === "campus" ? "캠퍼스" : "길거리"}
                     </span>
                   </div>
                   <h3 className="font-bold text-gray-900 mb-1">{report.stopName}</h3>
@@ -101,7 +101,7 @@ export default async function Home() {
         </div>
 
         {/* 4. 기존 메뉴 카드 (서버 컴포넌트로 변경되어 Link 태그 사용) */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* 버스 정류장 민원 카드 */}
           <Link
             href="/bus"
@@ -137,6 +137,26 @@ export default async function Home() {
                 교내 건물 시설물의 고장이나<br />보수가 필요한 곳을 알려주세요.
               </p>
               <div className="mt-auto flex flex-row items-center justify-center text-jnu-blue font-semibold whitespace-nowrap bg-blue-50 px-4 py-2 rounded-full group-hover:bg-blue-100 transition">
+                바로가기
+              </div>
+            </div>
+          </Link>
+
+          {/* 길거리 민원 카드 */}
+          <Link
+            href="/street"
+            className="group relative bg-white border border-gray-200 rounded-3xl p-8 flex flex-col items-center text-center shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="w-20 h-20 bg-red-500/10 text-red-500 rounded-2xl flex items-center justify-center mb-6 mx-auto group-hover:scale-110 transition-transform duration-300">
+                <MapPin size={40} />
+              </div>
+              <h2 className="text-xl font-bold text-gray-800 mb-3">길거리 민원</h2>
+              <p className="text-gray-500 mb-6 font-medium text-sm">
+                캠퍼스 밖이나 도로/보도의<br />위험한 시설물 등을 제보해 주세요.
+              </p>
+              <div className="mt-auto flex flex-row items-center justify-center text-red-600 font-semibold whitespace-nowrap bg-red-50 px-4 py-2 rounded-full group-hover:bg-red-100 transition">
                 바로가기
               </div>
             </div>

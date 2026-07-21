@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     // Generate code
     const typeCountResult = await sql`SELECT COUNT(*) FROM reports WHERE type = ${reportData.type}`;
     const nextSeq = parseInt(typeCountResult[0].count) + 1;
-    const prefix = reportData.type === "bus" ? "B" : "C";
+    const prefix = reportData.type === "bus" ? "B" : reportData.type === "campus" ? "C" : "S";
     const reportCode = `${prefix}${String(nextSeq).padStart(4, "0")}`;
 
     const now = new Date().toISOString();
