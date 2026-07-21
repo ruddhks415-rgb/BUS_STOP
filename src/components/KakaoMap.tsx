@@ -4,6 +4,7 @@ import Script from "next/script";
 import { useEffect, useState, useRef } from "react";
 import { STOPS } from "@/lib/mockData";
 import { getReports, addEmpathy, Report } from "@/lib/reportStore";
+import BusArrivalModal, { BusArrivalInfo } from "./BusArrivalModal";
 
 export default function KakaoMap() {
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -11,6 +12,13 @@ export default function KakaoMap() {
   const [mapInstance, setMapInstance] = useState<any>(null);
   const markersRef = useRef<any[]>([]);
   const infoWindowRef = useRef<any>(null);
+
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalStopName, setModalStopName] = useState("");
+  const [modalLoading, setModalLoading] = useState(false);
+  const [modalData, setModalData] = useState<BusArrivalInfo[]>([]);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined" && (window as any).kakao && (window as any).kakao.maps) {
@@ -46,27 +54,25 @@ export default function KakaoMap() {
 
         // Arrival Info Global Function
         (window as any).showArrivalInfo = async (stopId: string, stopName: string) => {
+          setModalStopName(stopName);
+          setModalLoading(true);
+          setModalError(null);
+          setModalData([]);
+          setIsModalOpen(true);
+
           try {
-            console.log(`[데이터 요청 중] ${stopName}...`);
             const res = await fetch(`/api/bus?stop_id=${stopId}`);
             const json = await res.json();
             
             if (json.error) {
-              alert(`[오류 발생]\n사유: ${json.error}`);
-              return;
+              setModalError(json.error);
+            } else {
+              setModalData(json.data || []);
             }
-            if (!json.data || json.data.length === 0) {
-              alert(`[도착 정보 없음] 현재 ${stopName} 정류장에 도착 예정인 버스가 없습니다.`);
-              return;
-            }
-
-            let msg = `🚌 [실시간 도착 정보] ${stopName} 🚌\n\n`;
-            json.data.forEach((bus: any) => {
-              msg += `▶ ${bus.lineName}번 버스: ${bus.remainMin}분 후 도착 예정\n`;
-            });
-            alert(msg);
           } catch (e) {
-            alert('네트워크 오류가 발생했습니다.');
+            setModalError('네트워크 오류가 발생했습니다.');
+          } finally {
+            setModalLoading(false);
           }
         };
 
@@ -183,6 +189,16 @@ export default function KakaoMap() {
           </div>
         )}
       </div>
+
+      {/* 실시간 버스 도착 정보 모달 */}
+      <BusArrivalModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        stopName={modalStopName}
+        loading={modalLoading}
+        data={modalData}
+        error={modalError}
+      />
     </>
   );
 }
