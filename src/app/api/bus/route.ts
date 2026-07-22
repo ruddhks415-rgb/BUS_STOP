@@ -23,8 +23,8 @@ export async function GET(request: Request) {
     const sttnRes = await fetch(sttnUrl, { cache: 'no-store', signal: controller.signal });
     const sttnText = await sttnRes.text();
 
-    if (sttnText.includes('<errMsg>') || sttnText.includes('SERVICE ERROR') || sttnText.includes('Forbidden') || sttnText.includes('Unexpected errors')) {
-      return NextResponse.json({ error: 'API Error (Station): ' + sttnText.substring(0, 100), raw: sttnText }, { status: 500 });
+    if (sttnText.includes('<errMsg>') || sttnText.includes('SERVICE ERROR') || sttnText.includes('Forbidden') || sttnText.includes('Unexpected errors') || sttnText.toUpperCase().includes('UNAUTHORIZED')) {
+      return NextResponse.json({ error: 'API Error (Station) - 키 미등록/권한 없음: ' + sttnText.substring(0, 100), raw: sttnText }, { status: 500 });
     }
 
     let sttnData;
@@ -51,8 +51,8 @@ export async function GET(request: Request) {
 
     clearTimeout(timeoutId);
 
-    if (arvlText.includes('<errMsg>') || arvlText.includes('SERVICE ERROR') || arvlText.includes('Forbidden') || arvlText.includes('Unexpected errors')) {
-      return NextResponse.json({ error: 'API Error (Arrival): ' + arvlText.substring(0, 100), raw: arvlText }, { status: 500 });
+    if (arvlText.includes('<errMsg>') || arvlText.includes('SERVICE ERROR') || arvlText.includes('Forbidden') || arvlText.includes('Unexpected errors') || arvlText.toUpperCase().includes('UNAUTHORIZED')) {
+      return NextResponse.json({ error: 'API Error (Arrival) - 키 미등록/권한 없음: ' + arvlText.substring(0, 100), raw: arvlText }, { status: 500 });
     }
 
     let arvlData;
